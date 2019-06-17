@@ -57,22 +57,21 @@ webParam <- data.frame(
     enddt = "2019-07-01",
     minPrice = "5000",
     maxPrice = "1000000",
-    pageSize = "10000",
+    pageSize = "10",     ## Sets num of records... up to 10000
     downloads = "5",
     stringsAsFactors = FALSE
 )
 webCmdStr<-"curl -X GET --header 'Accept: application/json' --header 'apikey: %s' --header 'accept: application/json' 'https://api.gateway.attomdata.com/propertyapi/v1.0.0/sale/snapshot?latitude=%s&longitude=%s&radius=%s&orderBy=SaleSearchDate+desc&startsalesearchdate=%s&endsalesearchdate=%s&minSaleAmt=%s&maxSaleAmt=%s&pageSize=%s'"
 
 
-fileName <- "cyo_data_file.json"
+fileName <- "real_ml_data_file.json"
 
-## Note: Changed name of gz file loaded, so that running this code
-## downloads and writes a file, but it won't overwrite the zipped version from github
-## instead, the git hub version of the fill will always be loaded.
-## move the file, or change this string if you wish to change that.
-gzFileName <- paste("cyo_data_file.github.json", ".gz",sep="")
+gzFileName <- paste("real_ml_data_file.json", ".gz",sep="")
+## Note: Changed name of gz file loaded, to always load the version of the file download from github
+## Comment out the line below if you would prefer to load the data that your code downloaded and saved.
+gzFileName <- paste("real_ml_data_file.github.json", ".gz",sep="")
 
-ealml_data_file.github.json.gz
+
 
 #Function to download web data, save to gzip file, and return data as a data_frame()
 getDataFromWeb <- function(webParam) {
@@ -204,13 +203,13 @@ myData %>%
 ## TODO
 ##
 #
-# TEST git hub links
+
 #
 # Test saving and loading files into getwd()
 #
 # Import code chunks from separate files (cut and paste when done)
 #
-# Outline report sections.
+.
 #
 # Copy sample  code for models.
 #
@@ -225,7 +224,8 @@ myData %>%
 #Create RStudio project
 #Copy files into project
 #Create Report file.
-#
+# TEST git hub links
+# Outline report sections
 #
 
 
