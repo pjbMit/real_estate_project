@@ -67,9 +67,12 @@ webCmdStr<-"curl -X GET --header 'Accept: application/json' --header 'apikey: %s
 fileName <- "real_ml_data_file.json"
 
 gzFileName <- paste("real_ml_data_file.json", ".gz",sep="")
-## Note: Changed name of gz file loaded, to always load the version of the file download from github
-## Comment out the line below if you would prefer to load the data that your code downloaded and saved.
-gzFileName <- paste("real_ml_data_file.github.json", ".gz",sep="")
+## Note: Changed name of gz file loaded, to always load
+## the version of the file downloaded from github.
+## Comment out the line below
+## if you would prefer to load the data that YOUR code
+## gets from the ATTOMDATA.com api data service and then saves as a file.
+#gzFileName <- paste("real_ml_data_file.github.json", ".gz",sep="")
 
 
 
@@ -156,8 +159,10 @@ download_and_save_web_data <- function(){
 
 }
 
-download_and_save_web_data()
-#rm(webData)
+## Note: Uncomment and run the line below
+## to fetch raw data using the attomdata.com
+## RESTful api and then saving the results to a local file.
+#download_and_save_web_data()
 
 #Load data from JSON gzip file to data_frame
 myData <- load_JSON_gzip_file(gzFileName)
