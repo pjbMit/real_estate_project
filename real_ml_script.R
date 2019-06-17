@@ -233,11 +233,25 @@ sapply(myTrain, class)
 summary(myTrain)
 
 ## @knitr summary_histogram
-par(mfrow=c(1,4))
-for(i in 1:4) {
+par(mfrow=c(2,3))
+for(i in c(1:4,13)) {
     hist(myTrain[,i], main=names(myTrain)[i])
 }
 
+## @knitr summary_histogram2
+
+#lets convert price to a log scale, and look at that too.
+myTrain <- myTrain %>% mutate(log_of_price= log(price))
+par(mfrow=c(2,3))
+for(i in c(1:4,13,14)) {
+    hist(myTrain[,i], main=names(myTrain)[i])
+}
+
+## @knitr summary_histogram3
+par(mfrow=c(2,3))
+for(i in c(1:4,13,14)) {
+    plot(density(myTrain[,i]), main=names(myTrain)[i])
+}
 
 ## @knitr correlation_plot
 correlations <- cor(myTrain[,c("beds","baths","sqft","yearbuilt")])
@@ -248,6 +262,7 @@ corrplot(correlations, method="circle")
 # remove correlated attributes
 # find attributes that are highly correlated
 
+## @knitr attribute_correation_removal
 set.seed(2020)
 cutoff <- 0.70
 correlations <- cor(cleanData[,c("beds","baths","sqft","yearbuilt")])

@@ -4,14 +4,13 @@ author: "By Philip J Brown,  pjbMit@pjb3.com"
 date: "6/16/2019"
 output: pdf_document
 ---
-```{r initialize, include=FALSE, cache=FALSE, eval=TRUE, echo=FALSE}
+```{r initialize, include=FALSE, cache=TRUE, eval=TRUE, echo=FALSE}
 require(knitr)
 #Read in the R script, so that we can
 #Execute portions named with:   ## @knitr chunk_name
 # with entries of the form: ```{r chunk_name}
 read_chunk('real_ml_script.R')
-knitr::opts_chunk$set(echo = FALSE, include = TRUE, cache = FALSE, eval=TRUE)
-runningInScript <- FALSE
+knitr::opts_chunk$set(echo = FALSE, include = TRUE, cache = TRUE, eval=TRUE)
 #knitr options are:
 #include= the output, or not
 #cache= the result, or not
@@ -133,6 +132,11 @@ Now it's time to look at some the individual data attributes.
 ```
 
 ```{r summary_histogram}
+```
+
+The bar plots are a little jagged.  Lets get a different perspective by smoothing out the graphs using a density plot. This helps us better visualize the data to see if we have a binomial distribution, or other anomally.
+
+```{r summary_histogram2}
 ```
 
 Next, we looked the remaining columns to see how they correlated, to see if we can
