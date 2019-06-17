@@ -20,7 +20,8 @@
 #     offered by HarvardX: PH125.9x throughh edx.org.
 #############################################################################
 
-## @knitr set_up_code
+
+
 
 isMac <- TRUE
 #isMac <- FALSE  ##Set to false if you are NOT running on a Mac.
@@ -36,7 +37,7 @@ if(!require(caret)) install.packages("caret", repos = repos)
 if(!require(corrplot)) install.packages("corrplot", repos = repos)  #provides corrplot visualizarion
 if(!require(kernlab)) install.packages("kernlab", repos = repos)  #provides 'rvmLinear' model method
 if(!require(knitr)) install.packages("knitr", repos = repos)
-
+if(!require(broom)) install.packages("broom", repos = repos)
 
 # Multicore processing package for caret.
 if(!require(doMC)) install.packages("doMC", repos = repos)
@@ -191,23 +192,23 @@ factorData <- readInData %>% transmute(beds,baths,sqft,yearbuilt,
                                     )
 #rm(readInData) #free memory
 
-## @knitr summary_date_range
+
+
+## @knitr after_setup1
+print ("Summary of data loaded")
 factorData %>% summarize(newest_sale=max(saledate),oldest_sale=min(saledate))
 
-## @knitr summary_proptype_subtype
-#Show "Resale' for "SFR" and "CONDOMINIUM
-factorData %>%
+print("show filtered data cross tab by type and subtype --")
+print("which indicates a little filtering and cleaning is needed.")
+resale_type_subtype <- factorData %>%
     filter(transtype == "Resale", proptype %in% c("SFR","CONDOMINIUM")) %>%
     group_by(state,propsubtype,proptype) %>%
     summarize(num_sales=n()) %>%
     select(state,propsubtype,proptype,num_sales) %>%
     xtabs(num_sales ~ proptype + propsubtype, data=.) %>%
-    ftable()
+    knitr::kable()
+## @knitr after_setup2
 
-factorData %>%
-    summarize(num_sales=n())
-
-factorData %>% group_by(transtype) %>% summarize(num=n())
 
 ## @knitr cleanse_data
 #Look for zero bedrooms, and determine their mean sqft.
@@ -286,7 +287,9 @@ for (value in highlyCorrelated) {
 }
 
 
-## @knitr model_output_1
+## @knitr model_run1
+
+
 
 # Run algorithms using 10-fold cross-validation
 trainControl <- trainControl(method="repeatedcv", number=10, repeats=3)
@@ -294,9 +297,14 @@ model_cols <- c("beds","baths","sqft")
 trainX <- myTrain[,model_cols]
 trainY <- myTrain[,"price"]
 
+y_hat <- mean(trainY)
+y_hat
 set.seed(2931)
+
+
 fit1 <- train(trainX, trainY, method="knn",tunelength = 10,
-                 preProc=c("center", "scale"), trControl=trainControl)
+                  trControl=trainControl)
+
 
 
 grid <- expand.grid(.cp=c(0, 0.05, 0.1))
@@ -308,17 +316,102 @@ fit2 <- train(trainX, trainY, method="rpart",
                   tuneGrid=grid,
                   trControl=trainControl)
 
+res<-resamples(list(knn=fit1,rpart=fit2))
+summary(res)
+
+
 # Stochastic Gradient Boosting
 set.seed(2931)
 fit3 <- train(trainX, trainY, method="gbm",
                  trControl=trainControl, verbose=FALSE)
 
 
-# Compare algorithms
-results <- resamples(list(  knn=fit1, rpart=fit2, gbm=fit3))
+
+model_cols2 <- c("beds","baths","sqft","lat","yearbuilt","zip")
+trainX2 <- myTrain[,model_cols]
+trainY2 <- myTrain[,"price"]
+
+set.seed(2931)
+fit4 <- train(trainX2, trainY2, method="knn",tunelength = 10,
+               preProc=c("center", "scale"), trControl=trainControl)
+
+
+set.seed(2931)
+fit5 <- train(trainX2, trainY2, method="rpart",
+              preProcess =c("center","scale"),
+              tuneLength = 9,
+              tuneGrid=grid,
+              trControl=trainControl)
+
+# Stochastic Gradient Boosting
+set.seed(2931)
+fit6 <- train(trainX2, trainY2, method="gbm",
+              trControl=trainControl, verbose=FALSE)
+
+
+model_cols3 <- c("beds","sqft","lat","yearbuilt","zip")
+trainX3 <- myTrain[,model_cols]
+trainY3 <- myTrain[,"price"]
+
+set.seed(2931)
+fit7 <- train(trainX3, trainY3, method="knn",tunelength = 10,
+              preProc=c("center", "scale"), trControl=trainControl)
+
+
+set.seed(2931)
+fit8 <- train(trainX3, trainY3, method="rpart",
+              preProcess =c("center","scale"),
+              tuneLength = 9,
+              tuneGrid=grid,
+              trControl=trainControl)
+
+# Stochastic Gradient Boosting
+set.seed(2931)
+fit9 <- train(trainX3, trainY3, method="gbm",
+              trControl=trainControl, verbose=FALSE)
+
+
+results <- resamples(list(knn=fit1, rpart=fit2, gbm=fit3, knn_2=fit4, rpart_2=fit5, gbm_2=fit6))
 summary(results)
-dotplot(results)
 
+results2<- resamples(list(knn=fit7, rpart=fit8, gbm=fit9))
+summary(results2)
 
+## @knitr new_chunk
+# Using the training data to predict test data results.
+testX <- myTest[,model_cols]
+testY <- myTest[,"price"]
+p1<-predict(fit8, newdata = testX)
+p2<-predict(fit7, newdata = testX)
+
+## @knitr look_at_errors
+head(testY,30)
+
+res <- tibble(y=testY,p1=p1,p2=p2)
+glimpse(res)
+RMSE(p1,testY)
+RMSE(p2,testY)
+err = p1-testY
+histogram(log(err))
+## knitr show_log_plot
+
+# e <-tibble(err=err)
+# top_n(e,40)
+
+#hist(error/1000)
+
+# p1[2]
+# testY[2]
+# mu_hat <- mean(myTrain$price)
+# mu <- mean(testY)
+# c(mu,mu_hat)
+#
+# scale(myTrain$price)
+# sd(myTrain$price)
+#
+# rmses
+# bothModels <- list(
+#     knn = knnFit,
+#     tree = rpartFit)
 
 

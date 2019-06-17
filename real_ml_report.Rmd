@@ -5,8 +5,21 @@ date: "6/16/2019"
 output: pdf_document
 ---
 ```{r initialize, echo=FALSE, include=FALSE}
-require(knitr)
-knitr::opts_chunk$set(echo = FALSE, include=TRUE)
+
+source("real_ml_script.R")
+knitr::opts_chunk$set(echo = FALSE, include=TRUE,cache =FALSE)
+
+#Load libraries, installing as necessary
+if(!require(jsonlite)) install.packages("jsonlite", repos = repos)
+if(!require(tidyverse)) install.packages("tidyverse", repos = repos)
+if(!require(lubridate)) install.packages("lubridate", repos = repos)
+if(!require(R.utils)) install.packages("R.utils", repos = repos)
+if(!require(caret)) install.packages("caret", repos = repos)
+if(!require(corrplot)) install.packages("corrplot", repos = repos)  #provides corrplot visualizarion
+if(!require(kernlab)) install.packages("kernlab", repos = repos)  #provides 'rvmLinear' model method
+if(!require(knitr)) install.packages("knitr", repos = repos)
+if(!require(broom)) install.packages("broom", repos = repos)
+
 #Read in the R script, so that we can
 #Execute portions named with:   ## @ knitr chunk_name
 # with entries of the form: ```{r chunk_name}
@@ -18,9 +31,6 @@ read_chunk('real_ml_script.R')
 #eval= the code, or not
 #echo= the code to knitr doc, or not
 
-```
-
-```{r set_up_code, echo=FALSE, include=FALSE, eval=TRUE}
 ```
 
 
@@ -74,7 +84,6 @@ Additionally, a gzip'd version of the data file is on github at:
 
 
 
-
 # Part 2) METHODS AND ANALYSIS
 
 The project was created in the RStudio environment 
@@ -92,13 +101,26 @@ Data was downloaded from AttomData.com, a commercial data provider, using their 
 an apikey that is needed in order to get data.  Sales data was queried from their API, and
 results were downloaded 10,000 rows at a time.
 
-The data was then filtered to remove property types that aren't residential condos or homes.
+Working code to download from Atom Data is included in the .Rmd script, but the function call is commented out.
 
+you may run it by calling **download_and_save_web_data()** which is a function that will connect to the Restful API service, query for the next 10,000 matching rows, and loop five times, downloading up to 50,000 rows of the most recent real estate sales data.  Once the data is filtered, you are likely to end up with about 1/2 as many records that in scope for this project.
 
+The data was then filtered to remove property types that aren't residential condos or homes.  Data wrangling skills were used to massage and clean up the data.  A fairly clean version of the data with Factors is within the factorData object.
 
+Here are some summary results produced from the factorData object:
 
-```{r define_functions, echo=FALSE,include=FALSE,eval=TRUE}
+```{r after_setup1, echo=FALSE, include=TRUE}
+
+#Show "Resale' for "SFR" and "CONDOMINIUM
+new_old_sale
 ```
+
+
+```{r after_setup2, echo=TRUE, include=TRUE}
+resale_type_subtype
+```
+
+
 
 # Part 3) RESULTS 
 
@@ -124,15 +146,17 @@ We removed these rows along with two unneeded colums.
 
 After cleansing the data, here's a grouped summary showing the data by year and property type:
 
-
 ```{r summary_by_year}
 ```
 
-Now it's time to look at some the individual data attributes.
+That's a decent amount of *current* data.  If I can just tun the model appropriately, we should be good to go.
+
+Now it's time to look at a summary() of the data to get a better feel some the individual data attributes.
 
  ```{r summary_head}
  ```
 
+The text is useful, but graphs are better...
 ```{r summary_histogram}
 ```
 
@@ -140,6 +164,7 @@ The bar plots are a little jagged.  Lets get a different perspective by smoothin
 
 ```{r summary_histogram2, echo=TRUE, include=TRUE, fig.height=4, fig.width=4}
 ```
+The SqFt, in particular has a long tail towards some very large houses.  This *could* be a problem for some models, and might be a source of model error.  (Update -- after looking into the rather large model errors, I believe that the skew towards large million dollar houses, has the effect either through the model or through my sampling methods, of biasing the model to over-estimated.  I suspect that other models could compensate, especially one the uses regularization.  I ran almost a dozen different models.  Quite truthfully, something made my models *exceptionally* slow, which kept me from working more with different models.)
 
 Next, we looked the remaining columns to see how they correlated, to see if we can
 remove any columns that are highly correlated.
@@ -149,75 +174,83 @@ remove any columns that are highly correlated.
 
 The data is highly correlated.  We use the calculation below to determine
 which attribute, if any, we should consider removing to see if our models improve...
- and the answer turns out to be baths.  But for now, we opted not to remove baths from the model.
+
 ```{r attribute_correation_removal, echo=TRUE, include=TRUE}
 
 ```
+ and the answer turns out to be baths.  So, as part of the data modelling, we should experiment with models both with and with baths in them, to see if removing baths helps the model perform better.
 
 ### Modelling
 
 Now it's time to explore our data models.
 Let's try a mix of non-linear models, and see how we do.
-Note that we enabled parallel processing in the caret package by loading the **doMC* package and library.
+Note that we enabled parallel processing in the caret package by loading the **doMC** package and library.
+(If it gives you trouble, comment it out on lines 43 and 44 in the script. For me, it made some modes wayyyyyy faster!!!)
 
 Here are the models from our first run.
 
 
-```{r model_output_1, include=TRUE}
-
+```{r model_run1, echo=TRUE, include=TRUE}
+print("This is the first run")
 ```
 
 And here are the results of the output.
-# ```{r models_compare1, echo=TRUE, include=TRUE, eval=TRUE, cache=FALSE}
-# ```
-
-
-TODO
-* Data was ...
-* After these models were evaluated, we looked at variability, and attempted to add genre to models using several standard models available through the **caret package** and applied techniques such as cross-validation. While we examined these models, and made multiple attempts to improve the results, none of the techniques tried improved upon the best results that were previously used.
-
- 
--- General approach:
-
-For many approaches, I  first tried working on a very small data set, just to get the code working,
-then I re-ran the on a medium sized data set, and then when I was satisfied, then I processed the full training set.
-
-Similarly, initially I did NOT do full cross-validation, but once the model was built and the code was working, I enabled cross validation and other ML techniques.
-
-Additionally, being sensitive to computation times, I wrote code and used global variables to enable saving daa and objects containing intermediate results as files on the local file system.  By changing the values of these logial variable from TRUE to FALSE, or vice-versa, I was able to re-run code without having to repeat some of the more lengthy processing or repeatedly downloading and cleansing the same data.
-
---set up
-
-Set up libraries and enable multi-core processing 
-for some of the operations used by the caret package.  
-Because I have an 8 core processor, for calcuations that can 
-utilize the parallel processing features, this script runs ***substantially** faster.
-
-
-
-
-
-# Part 4) CONCLUSION
-
-The model results were promising, as can be seen by the output from rmse_results.
-
-
-I discovered a library and options to set to enable multi-core parallel processing for some of the algorithms in the **caret** package, and this technique helped tremendously, as I was able to span 8 R-sessions that ran in parallel to process some of the algorithms.  
-
-Ultimately, the best results that I obtained were a **RMSE of TODO** which was obtained ffrom the final model.  This was deemed satisfactory based on goals and scope of this project.  Of course, if you plan to move nearby, please do your own due dilligence before purchasing a home -- while I wanted to choose an impactful and relevant project, this project was created primarily for didactic purposes. 
-
-*(See the output below which shows the best results obtained.)*
-
-```{r Best_Results}
-
-# The estimates that minimize this can be found similarly to what we did above. 
-# Here we use cross-validation to pick a  lambda
-
+```{r echo=TRUE, include=TRUE}
 
 ```
 
+So, the average home cost is about 540K, and our best RSME is about 140K... that's not very good. We need to look into the data and find out what to change to do better.
+
+Let's add "lat","yearbuilt","zip" to the model, and rerun it both with and without "bath" as a paramter.
+The results are below...
 
 
+I'm still not happy with the results.  Let's look at a box-and-whisker plot for more insight.  The outliers will deserve more attention, and a box and whisker plot can help us look for skews in the data.
+
+```{r}
+
+# boxplots for each attribute
+par(mfrow=c(2,7))
+for(i in c(1:7,13)) {
+  boxplot(myTrain[,i], main=names(myTrain)[i])
+}
+```
+
+```{r knitr new_chunk, echo=TRUE}
+
+
+```
+Time to drill down into the sources of the errors...
+
+
+```{r look_at_errors}
+
+```
+Putting the errors on a logarithmic scale, helps clarify the skew.  Our error distribution is skewed, and we have a small number of very large over-estimates.  For example, the data above shows that one of the y's is \$385K, but two of the models predicted \$875K and \$894k!.  
+
+```{r show_log_plot, echo=TRUE}
+
+```
+
+# Part 4) CONCLUSION
+Massive over-predictions are skewing the model.  It will take more investigation and research to build a better model.  I had initially used the log function with the createDataPartition argument to impement binning so that we would get better represeentation from the whole range of values.  I thought that this might have skewed the model, but when I re-ran it without binning, the results weren't much better.
+
+Next, I'd like to try some of the models the implement regularization, since I suspect that a small number of very expensive homes are skewing the model.  
+```{r}
+mfrow=c(2,1)
+histogram(myTrain$price)
+plot(density(myTrain[,"price"]), main="price")
+
+```
+As the two price plots above show, it seems like the prices themselves have an underlying bi-nomial distribution.   There are the main group of houses centered around \$500K, plus there appears to be another group of homes centered around \$850K.  Armed with this insight, the search will contiue!  I suspect that some of the machine learning algorithms may handle this situation with ease.  Certainly more experimentation and research is called for.  Plus, for models that have tunining paramters, some manual tuning may be required.  Note that I used a grid for some of the models, and took advantage of the grid tuning inherint with specifying the model and a grid.  
+
+I have demonstrated a desire to pick a challenging topic -- namely, getting real, live data for *current* home sales near my home.  The search, learnign the api, getting access to the data, and coding to pull the data are all part of a good data science exercise.  It would have been easier to have selected a pre-cleansed data set of off kaggle, and followed a scripted approach to building a model, but I decided to be more adventurous.  I know that with time, experimentation and maybe even collaboration with others in the field, that I will be able to improve the model results substantially.  Ensemble models, and ones with feature identification could all help.  Nonetheless, I consider this assignment a success, in that I pulled together many of the skills and lessons tauht in this program to produce running code, data analysis, graphics and some insight.  Yes, I realize that the machine learning algorithm needs more work, but I *did* implement several, and worked through them.  The project was very useful.  It helped clarify many of the subtlties that you can only learn by *doing*.
+
+One last note.  For quite some time, my machine ran exceptionally slow on models.  I eventually re-wrote my model code, and changed to using the x,y format instead of the formula format. There must have been some error in my previous code, because suddenly, these models ran orders of magnitude faster.  This isn't a bad thing -- it's all part of the journey, and the reason why I enrolled in the program -- namely, to learn by doing.  With those barriers behind me, I look forward to my next challenge.  
+
+I also wanted to highlight that I installed the *doMC* package, and configured it to use 8 parallel threads for some the carret packages... what a differnce multi-core computing makes!   
+
+I believe that this assignment sucessfully fulfilled the requirements.  To answer my initial question, right now I would have to say "No!" -- I have not yet built a machine learning model that is accurate enough to be impressive, but, my road has just begun, and I *did* build a machine learning model.  It will be an itereative process, and a fun one. Cheers!
 
 ```{r signature, echo=FALSE,include=TRUE}
 #Note that `echo = FALSE`  was added to the code chunk to prevent printing this code out of the generated pdf.
@@ -225,7 +258,4 @@ print("Thanks for checking this out!  pjbMit@pjb3.com  :-)")
 ```
 
 
-```{r}
-#fig.width, and fig.height
-```
 
