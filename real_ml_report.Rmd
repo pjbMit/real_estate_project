@@ -4,20 +4,24 @@ author: "By Philip J Brown,  pjbMit@pjb3.com"
 date: "6/16/2019"
 output: pdf_document
 ---
-```{r initialize, include=FALSE, cache=TRUE, eval=TRUE, echo=FALSE}
+```{r initialize, echo=FALSE, include=FALSE}
 require(knitr)
+knitr::opts_chunk$set(echo = FALSE, include=TRUE)
 #Read in the R script, so that we can
-#Execute portions named with:   ## @knitr chunk_name
+#Execute portions named with:   ## @ knitr chunk_name
 # with entries of the form: ```{r chunk_name}
 read_chunk('real_ml_script.R')
-knitr::opts_chunk$set(echo = FALSE, include = TRUE, cache = TRUE, eval=TRUE)
+
 #knitr options are:
 #include= the output, or not
 #cache= the result, or not
-#evaluate= the code, or not
+#eval= the code, or not
 #echo= the code to knitr doc, or not
+
 ```
 
+```{r set_up_code, echo=FALSE, include=FALSE, eval=TRUE}
+```
 
 
 **HarvardX Data Science Capstone Class** 
@@ -90,18 +94,16 @@ results were downloaded 10,000 rows at a time.
 
 The data was then filtered to remove property types that aren't residential condos or homes.
 
-<!-- Reads and executs the script portion taged with the knitr label set_up_code -->
-```{r set_up_code, echo=FALSE, include=FALSE, eval=TRUE}
-```
+
 
 
 ```{r define_functions, echo=FALSE,include=FALSE,eval=TRUE}
 ```
 
-# Part 3) RESULTS {#Best-Results}
+# Part 3) RESULTS 
 
 After downloaing the raw data, we had sales information covering the following sales date range:
-```{r summary_date_range, echo=FALSE, include=TRUE,eval=TRUE, cache=TRUE}
+```{r summary_date_range, echo=TRUE, include=TRUE, eval=TRUE, cache=FALSE}
 ```
 
 We found additional filter criteria to help us cleanse the data.
@@ -109,7 +111,7 @@ For example, shown below is the  data after filtering to show just the property 
 which had the effect of removing commercial sales, industrial sales, and other data that is out of scope
 for this project.
 
-```{r summary_proptype_subtype, echo=FALSE, include=TRUE, cache=TRUE}
+```{r summary_proptype_subtype, echo=TRUE, include=TRUE, cache=FALSE}
 ```
 
 After examining the data, we saw that a little data-cleansing house keeping was in order.
@@ -117,40 +119,57 @@ We found that about 10% of the data had zero listed for bedrooms, yet those unit
 about 1400 sqft on average (mean), thus the zero bedrooms was clearly an error.
 We removed these rows along with two unneeded colums.
 
-```{r cleanse_data}
+```{r cleanse_data, echo=TRUE, include=TRUE}
 ```
 
 After cleansing the data, here's a grouped summary showing the data by year and property type:
 
-<!-- consider changing to a bar chart -->
-```{r summary_by_year, echo=FALSE, include=TRUE, cache=FALSE}
+
+```{r summary_by_year}
 ```
 
 Now it's time to look at some the individual data attributes.
 
-```{r summary_head, echo=FALSE}
-```
+ ```{r summary_head}
+ ```
 
 ```{r summary_histogram}
 ```
 
 The bar plots are a little jagged.  Lets get a different perspective by smoothing out the graphs using a density plot. This helps us better visualize the data to see if we have a binomial distribution, or other anomally.
 
-```{r summary_histogram2}
+```{r summary_histogram2, echo=TRUE, include=TRUE, fig.height=4, fig.width=4}
 ```
 
 Next, we looked the remaining columns to see how they correlated, to see if we can
 remove any columns that are highly correlated.
 
-```{r correlation_plot}
+```{r correlation_plot }
 ```
 
 The data is highly correlated.  We use the calculation below to determine
-which attribute, if any, we should remove, and the answer turns out to be baths.
-But for now, we'll leave them in the data.
-```{rattribute_correation_removal, echo=TRUE}
+which attribute, if any, we should consider removing to see if our models improve...
+ and the answer turns out to be baths.  But for now, we opted not to remove baths from the model.
+```{r attribute_correation_removal, echo=TRUE, include=TRUE}
+
 ```
 
+### Modelling
+
+Now it's time to explore our data models.
+Let's try a mix of non-linear models, and see how we do.
+Note that we enabled parallel processing in the caret package by loading the **doMC* package and library.
+
+Here are the models from our first run.
+
+
+```{r model_output_1, include=TRUE}
+
+```
+
+And here are the results of the output.
+# ```{r models_compare1, echo=TRUE, include=TRUE, eval=TRUE, cache=FALSE}
+# ```
 
 
 TODO
@@ -178,10 +197,6 @@ utilize the parallel processing features, this script runs ***substantially** fa
 
 
 
-
-TODO
-
-
 # Part 4) CONCLUSION
 
 The model results were promising, as can be seen by the output from rmse_results.
@@ -197,8 +212,7 @@ Ultimately, the best results that I obtained were a **RMSE of TODO** which was o
 
 # The estimates that minimize this can be found similarly to what we did above. 
 # Here we use cross-validation to pick a  lambda
-if(runningInScript){
-}
+
 
 ```
 
@@ -209,3 +223,9 @@ if(runningInScript){
 #Note that `echo = FALSE`  was added to the code chunk to prevent printing this code out of the generated pdf.
 print("Thanks for checking this out!  pjbMit@pjb3.com  :-)")
 ```
+
+
+```{r}
+#fig.width, and fig.height
+```
+

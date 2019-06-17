@@ -34,6 +34,14 @@ if(!require(lubridate)) install.packages("lubridate", repos = repos)
 if(!require(R.utils)) install.packages("R.utils", repos = repos)
 if(!require(caret)) install.packages("caret", repos = repos)
 if(!require(corrplot)) install.packages("corrplot", repos = repos)  #provides corrplot visualizarion
+if(!require(kernlab)) install.packages("kernlab", repos = repos)  #provides 'rvmLinear' model method
+if(!require(knitr)) install.packages("knitr", repos = repos)
+
+
+# Multicore processing package for caret.
+if(!require(doMC)) install.packages("doMC", repos = repos)
+registerDoMC(cores=8)
+
 
 # ATTOMDATA R Code
 # Data download from a RESTful API from
@@ -77,7 +85,6 @@ gzFileName <- paste("real_ml_data_file.json", ".gz",sep="")
 #gzFileName <- paste("real_ml_data_file.github.json", ".gz",sep="")
 
 
-## @knitr define_functions
 
 #Function to download web data, save to gzip file, and return data as a data_frame()
 getDataFromWeb <- function(webParam) {
@@ -168,17 +175,28 @@ download_and_save_web_data <- function(){
 #download_and_save_web_data()
 
 #Load data from JSON gzip file to data_frame
-myData <- load_JSON_gzip_file(gzFileName)
-
-
-#Show & Sanity check the data
+readInData <- load_JSON_gzip_file(gzFileName)
+factorData <- readInData %>% transmute(beds,baths,sqft,yearbuilt,
+                                    lat=as.numeric(lat),
+                                    lon=as.numeric(lon),
+                                    saledate=ymd(saledate),
+                                    zip=as.factor(zip),
+                                    city=as.factor(city),
+                                    state=as.factor(state),
+                                    proptype=as.factor(proptype),
+                                    propsubtype=as.factor(propsubtype),
+                                    addr=as.factor(addr),
+                                    transtype=as.factor(transtype),
+                                    price
+                                    )
+#rm(readInData) #free memory
 
 ## @knitr summary_date_range
-myData %>% summarize(newest_sale=max(saledate),oldest_sale=min(saledate))
+factorData %>% summarize(newest_sale=max(saledate),oldest_sale=min(saledate))
 
 ## @knitr summary_proptype_subtype
 #Show "Resale' for "SFR" and "CONDOMINIUM
-myData %>%
+factorData %>%
     filter(transtype == "Resale", proptype %in% c("SFR","CONDOMINIUM")) %>%
     group_by(state,propsubtype,proptype) %>%
     summarize(num_sales=n()) %>%
@@ -186,45 +204,45 @@ myData %>%
     xtabs(num_sales ~ proptype + propsubtype, data=.) %>%
     ftable()
 
-myData %>%
+factorData %>%
     summarize(num_sales=n())
 
-## @knitr cleanse_data
-myData %>% group_by(transtype) %>% summarize(num=n())
-#All rows are "Resale", so we can remove that colum.
+factorData %>% group_by(transtype) %>% summarize(num=n())
 
+## @knitr cleanse_data
 #Look for zero bedrooms, and determine their mean sqft.
-myData %>% filter(beds==0) %>% summarize(num=n(),mean(sqft))
+factorData %>% filter(beds==0) %>% summarize(num=n(),mean(sqft))
+
 
 #remove zero bedroom errors, and remove unneeded columns.
-cleanData <- myData %>% filter(beds != 0) %>%
+myData <- factorData %>% filter(beds != 0) %>%
              select(-transtype,-propsubtype)
 
-#Remove rowId
-cleanDataRowId <- myData$rowId
-cleanData <- cleanData %>% select (-rowId)
-# now split to test and training data
-set.seed(2931)
-trainIndx <- createDataPartition(cleanData$price, p=0.80, list=FALSE)
-# use 80% of data to for training the model.
-myTrain <- cleanData[trainIndx,]
-myTrainRowId <- cleanDataRowId[trainIndx]
-# select 20% of the data for test validation
-myTest <- cleanData[-trainIndx,]
-myTestRowId <- cleanDataRowId[-trainIndx]
-
 ## @knitr summary_by_year
-myTrain %>%
+factorData %>%
     mutate(year_sold=year(ymd(saledate))) %>%
     group_by(state,proptype,year_sold) %>%
     summarize(num_sales=n()) %>%
     select(state,proptype,year_sold,num_sales) %>%
     xtabs(num_sales ~ proptype + year_sold , data=.) %>%
     ftable()
-nrow(myTrain)
+nrow(factorData)
+
+
+##Limit to all sales since a specified date
+salesSince <- "2018-06-01"
+length(which(myData$saledate > ymd(salesSince)))
+datasubset <- myData[which(myData$saledate > ymd(salesSince)),]
+dim(datasubset)  #that's better!
+
+set.seed(2931)
+#The log10 is to use binning to see that we get a good represenation in our sample
+trainIndx <- createDataPartition(log10(datasubset$price), p = 0.80, list=FALSE)
+myTrain <- datasubset[trainIndx,]
+myTest <- datasubset[-trainIndx,]
 
 ## @knitr summary_head
-head(myTrain,10)
+summary(myTrain)
 
 #summary_attribute_types
 sapply(myTrain, class)
@@ -233,23 +251,20 @@ sapply(myTrain, class)
 summary(myTrain)
 
 ## @knitr summary_histogram
-par(mfrow=c(2,3))
-for(i in c(1:4,13)) {
-    hist(myTrain[,i], main=names(myTrain)[i])
-}
+par(mfrow=c(3,3))
+cols <- c("beds","baths","sqft","yearbuilt","lat","lon","price")
+sapply(cols, function(colname)(hist(myTrain[,colname], main=colname)))
+
 
 ## @knitr summary_histogram2
-
-#lets convert price to a log scale, and look at that too.
-myTrain <- myTrain %>% mutate(log_of_price= log(price))
 par(mfrow=c(2,3))
-for(i in c(1:4,13,14)) {
-    hist(myTrain[,i], main=names(myTrain)[i])
+for(i in c(1:6)) {
+    plot(density(myTrain[,i]), main=names(myTrain)[i])
 }
 
 ## @knitr summary_histogram3
 par(mfrow=c(2,3))
-for(i in c(1:4,13,14)) {
+for(i in c(1:6)) {
     plot(density(myTrain[,i]), main=names(myTrain)[i])
 }
 
@@ -258,69 +273,52 @@ correlations <- cor(myTrain[,c("beds","baths","sqft","yearbuilt")])
 corrplot(correlations, method="circle")
 
 
-
 # remove correlated attributes
 # find attributes that are highly correlated
 
 ## @knitr attribute_correation_removal
 set.seed(2020)
 cutoff <- 0.70
-correlations <- cor(cleanData[,c("beds","baths","sqft","yearbuilt")])
+correlations <- cor(myTrain[,c("beds","baths","sqft","yearbuilt")])
 highlyCorrelated <- findCorrelation(correlations, cutoff=cutoff)
 for (value in highlyCorrelated) {
-    print(names(cleanData)[value])
+    print(names(myTrain)[value])
 }
 
 
+## @knitr model_output_1
+
+# Run algorithms using 10-fold cross-validation
+trainControl <- trainControl(method="repeatedcv", number=10, repeats=3)
+model_cols <- c("beds","baths","sqft")
+trainX <- myTrain[,model_cols]
+trainY <- myTrain[,"price"]
+
+set.seed(2931)
+fit1 <- train(trainX, trainY, method="knn",tunelength = 10,
+                 preProc=c("center", "scale"), trControl=trainControl)
 
 
-# 3-Way Frequency Table
-# mytable <- xtabs(~A+B+c, data=mydata)
-# ftable(mytable) # print table
-# summary(mytable) # chi-square test of indepedence
+grid <- expand.grid(.cp=c(0, 0.05, 0.1))
 
-#run()
+set.seed(2931)
+fit2 <- train(trainX, trainY, method="rpart",
+                  preProcess =c("center","scale"),
+                  tuneLength = 9,
+                  tuneGrid=grid,
+                  trControl=trainControl)
 
-##
-## TODO
-##
-#
-# Look at code that builds a model
-#
-# Move it into the document
-#
-# Show the code in the report
-#
-# Check the model results.
+# Stochastic Gradient Boosting
+set.seed(2931)
+fit3 <- train(trainX, trainY, method="gbm",
+                 trControl=trainControl, verbose=FALSE)
 
 
-#
-# Look for sample graphics -- put in place holders.
-#
-# Summarize Data
-# Set cache=TRUE for finalized outputs in the Rmd report.
-#
+# Compare algorithms
+results <- resamples(list(  knn=fit1, rpart=fit2, gbm=fit3))
+summary(results)
+dotplot(results)
 
-##
-## Done!
-##
-#Create new project on git hub
-#Create RStudio project
-#Copy files into project
-#Create Report file.
-# TEST git hub links
-# Outline report sections
-# Test saving and loading files into getwd()
-# Import named knitr tags into code chunks
-#
-
-# factorData <- cleanData %>% mutate(proptype=as.factor(proptype),
-#                                    addr=as.factor(addr),
-#                                    city=as.factor(city),
-#                                    state=as.factor(state),
-#                                    zip=as.factor(zip)
-# )
-# str(factorData)
 
 
 
