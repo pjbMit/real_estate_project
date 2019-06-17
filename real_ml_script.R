@@ -32,6 +32,8 @@ if(!require(jsonlite)) install.packages("jsonlite", repos = repos)
 if(!require(tidyverse)) install.packages("tidyverse", repos = repos)
 if(!require(lubridate)) install.packages("lubridate", repos = repos)
 if(!require(R.utils)) install.packages("R.utils", repos = repos)
+if(!require(caret)) install.packages("caret", repos = repos)
+if(!require(corrplot)) install.packages("corrplot", repos = repos)  #provides corrplot visualizarion
 
 # ATTOMDATA R Code
 # Data download from a RESTful API from
@@ -168,6 +170,7 @@ download_and_save_web_data <- function(){
 #Load data from JSON gzip file to data_frame
 myData <- load_JSON_gzip_file(gzFileName)
 
+
 #Show & Sanity check the data
 
 ## @knitr summary_date_range
@@ -187,25 +190,78 @@ myData %>%
     summarize(num_sales=n())
 
 ## @knitr cleanse_data
+myData %>% group_by(transtype) %>% summarize(num=n())
+#All rows are "Resale", so we can remove that colum.
 
-## CLEANSE DATA
-#
-# Do additional data cleansing here, if needed.
-# Possibly look for NA and zeros for bedrooms
-# the determine whether to remove, or set to the mean. (if they are outliers, then remove.)
+#Look for zero bedrooms, and determine their mean sqft.
+myData %>% filter(beds==0) %>% summarize(num=n(),mean(sqft))
+
+#remove zero bedroom errors, and remove unneeded columns.
+cleanData <- myData %>% filter(beds != 0) %>%
+             select(-transtype,-propsubtype)
+
+#Remove rowId
+cleanDataRowId <- myData$rowId
+cleanData <- cleanData %>% select (-rowId)
+# now split to test and training data
+set.seed(2931)
+trainIndx <- createDataPartition(cleanData$price, p=0.80, list=FALSE)
+# use 80% of data to for training the model.
+myTrain <- cleanData[trainIndx,]
+myTrainRowId <- cleanDataRowId[trainIndx]
+# select 20% of the data for test validation
+myTest <- cleanData[-trainIndx,]
+myTestRowId <- cleanDataRowId[-trainIndx]
+
+#Summarize and describe data
+## @knitr summary_head
+head(myTrain,10)
+
+## @knitr summary_attribute_types
+sapply(myTrain, class)
+
+## @knitr summary_summary
+summary(myTrain)
 
 ## @knitr summary_by_year
-myData %>%
+myTrain %>%
     mutate(year_sold=year(ymd(saledate))) %>%
     group_by(state,proptype,year_sold) %>%
     summarize(num_sales=n()) %>%
     select(state,proptype,year_sold,num_sales) %>%
     xtabs(num_sales ~ proptype + year_sold , data=.) %>%
     ftable()
+nrow(myTrain)
+
+#convert lat and lon to numberic
+#myTrain[,"lat"] <- as.numeric(myTrain[,"lat"])
+#myTrain[,"lon"] <- as.numeric(myTrain[,"lon"])
+
+# histograms each attribute
+## @knitr summary_histogram
+par(mfrow=c(1,4))
+for(i in 1:4) {
+    hist(myTrain[,i], main=names(myTrain)[i])
+}
+
+
+## @knitr correlation_plot
+correlations <- cor(myTrain[,c("beds","baths","sqft","yearbuilt")])
+corrplot(correlations, method="circle")
 
 
 
-# set all NA and 0 bedrooms to 1.
+# remove correlated attributes
+# find attributes that are highly correlated
+
+set.seed(2020)
+cutoff <- 0.70
+correlations <- cor(cleanData[,c("beds","baths","sqft","yearbuilt")])
+highlyCorrelated <- findCorrelation(correlations, cutoff=cutoff)
+for (value in highlyCorrelated) {
+    print(names(cleanData)[value])
+}
+
 
 
 
@@ -220,17 +276,15 @@ myData %>%
 ## TODO
 ##
 #
-# Summarize data
+# Look at code that builds a model
 #
-# Cleanse Data
+# Move it into the document
 #
-# Build model
+# Show the code in the report
 #
-# Run model
-#
-# Copy sample  code for models.
-#
-# Modify sample code.
+# Check the model results.
+
+
 #
 # Look for sample graphics -- put in place holders.
 #
@@ -251,6 +305,13 @@ myData %>%
 # Import named knitr tags into code chunks
 #
 
+# factorData <- cleanData %>% mutate(proptype=as.factor(proptype),
+#                                    addr=as.factor(addr),
+#                                    city=as.factor(city),
+#                                    state=as.factor(state),
+#                                    zip=as.factor(zip)
+# )
+# str(factorData)
 
 
 
