@@ -4,6 +4,22 @@ author: "By Philip J Brown,  pjbMit@pjb3.com"
 date: "6/16/2019"
 output: pdf_document
 ---
+```{r initialize, include=FALSE, cache=FALSE, eval=TRUE, echo=FALSE}
+require(knitr)
+#Read in the R script, so that we can
+#Execute portions named with:   ## @knitr chunk_name
+# with entries of the form: ```{r chunk_name}
+read_chunk('real_ml_script.R')
+knitr::opts_chunk$set(echo = TRUE, cache = FALSE, eval=TRUE, INCLUDE=FALSE)
+runningInScript <- FALSE
+#knitr options are:
+#include= the output, or not
+#cache= the result, or not
+#evaluate= the code, or not
+#echo= the code to knitr doc, or not
+```
+
+
 
 **HarvardX Data Science Capstone Class** 
 PH125.9x (2T2018)
@@ -65,12 +81,51 @@ on a Macintosh; Intel Mac OS X 10_14_5
 R version 3.5.1 (2018-07-02)  
 nickname       Feather Spray
 
-See the README.Rmd or README.html files for more information on the environment and setup.
-For questions, email me:   pjbMit@pjb3.com  , and I'll gladly respond promptly.
+
 
 All code was written in R and executed in RStudio.
 
 Here are the methods and techniques used.
+
+Data was downloadeed from AttomData.com, a commercial data provider, using their RESTful API and
+an apikey that is needed in order to get data.  Sales data was queried from their API, and
+results were downloaded 10,000 rows at a time.
+
+The the data was filtered to remove property types weren't residential condos or homes.
+
+<!-- Reads and executs the script portion taged with the knitr label set_up_code -->
+```{r set_up_code, echo=FALSE, include=FALSE, eval=TRUE}
+```
+
+First set up a few logical variables in the global environment,
+then install packages and load libraries if and as needed.
+```{r define_functions, echo=FALSE,include=FALSE,eval=TRUE}
+```
+
+# Part 3) RESULTS {#Best-Results}
+
+Here's a link [back to the Summary](#Summary) section of this report
+
+After downloaind the raw data, we had sales information covering the following data range:
+```{r summary_date_range, echo=FALSE, include=TRUE,eval=TRUE, cache=TRUE}
+```
+
+We found additional filter criteria to help use cleanse the data.
+For example, below the raw data has been filter to show just the property types and subtypes of interest,
+which had the effect of removing commercial sales, industrial sales, and other data that is out of scope
+for this project.
+
+```{r summary_proptype_subtype, echo=FALSE, include=TRUE, cache=TRUE}
+```
+
+After cleansing the data, here's a grouped summary showing the data by year and property type:
+
+Here's a summary of the loaded data by year
+<!-- consider changing to a bar chart -->
+```{r summary_by_year, echo=FALSE, include=TRUE, cache=TRUE}
+
+```
+
 
 TODO
 * Data was ...
@@ -93,27 +148,17 @@ for some of the operations used by the caret package.
 Because I have an 8 core processor, for calcuations that can 
 utilize the parallel processing features, this script runs ***substantially** faster.
 
-```{r initialize, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-runningInScript <- FALSE
-```
 
 
-First set up a few logical variables in the global environment,
-then install packages and load libraries if and as needed.
 
 
-# Part 3) RESULTS {#Best-Results}
-
-Here's a link [back to the Summary](#Summary) section of this script.
-
-The model results were promising, as can be seen by the output from rmse_results.
 
 TODO
 
 
 # Part 4) CONCLUSION
 
+The model results were promising, as can be seen by the output from rmse_results.
 
 
 I discovered a library and options to set to enable multi-core parallel processing for some of the algorithms in the **caret** package, and this technique helped tremendously, as I was able to span 8 R-sessions that ran in parallel to process some of the algorithms.  
@@ -134,7 +179,7 @@ if(runningInScript){
 
 
 
-```{r signature, echo=FALSE}
+```{r signature, echo=FALSE,include=TRUE}
 #Note that `echo = FALSE`  was added to the code chunk to prevent printing this code out of the generated pdf.
 print("Thanks for checking this out!  pjbMit@pjb3.com  :-)")
 ```

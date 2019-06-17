@@ -20,7 +20,7 @@
 #     offered by HarvardX: PH125.9x throughh edx.org.
 #############################################################################
 
-# Setup Code
+## @knitr set_up_code
 
 isMac <- TRUE
 #isMac <- FALSE  ##Set to false if you are NOT running on a Mac.
@@ -75,6 +75,7 @@ gzFileName <- paste("real_ml_data_file.json", ".gz",sep="")
 #gzFileName <- paste("real_ml_data_file.github.json", ".gz",sep="")
 
 
+## @knitr define_functions
 
 #Function to download web data, save to gzip file, and return data as a data_frame()
 getDataFromWeb <- function(webParam) {
@@ -168,9 +169,12 @@ download_and_save_web_data <- function(){
 myData <- load_JSON_gzip_file(gzFileName)
 
 #Show & Sanity check the data
+
+## @knitr summary_date_range
 myData %>% summarize(newest_sale=max(saledate),oldest_sale=min(saledate))
 
-#Show "Resale' for "SFR" and "CONDOMINIUM"
+## @knitr summary_proptype_subtype
+#Show "Resale' for "SFR" and "CONDOMINIUM
 myData %>%
     filter(transtype == "Resale", proptype %in% c("SFR","CONDOMINIUM")) %>%
     group_by(state,propsubtype,proptype) %>%
@@ -182,7 +186,15 @@ myData %>%
 myData %>%
     summarize(num_sales=n())
 
-#Show summary by year
+## @knitr cleanse_data
+
+## CLEANSE DATA
+#
+# Do additional data cleansing here, if needed.
+# Possibly look for NA and zeros for bedrooms
+# the determine whether to remove, or set to the mean. (if they are outliers, then remove.)
+
+## @knitr summary_by_year
 myData %>%
     mutate(year_sold=year(ymd(saledate))) %>%
     group_by(state,proptype,year_sold) %>%
@@ -191,7 +203,7 @@ myData %>%
     xtabs(num_sales ~ proptype + year_sold , data=.) %>%
     ftable()
 
-## CLEANSE DATA
+
 
 # set all NA and 0 bedrooms to 1.
 
@@ -208,19 +220,23 @@ myData %>%
 ## TODO
 ##
 #
-
+# Summarize data
 #
-# Test saving and loading files into getwd()
+# Cleanse Data
 #
-# Import code chunks from separate files (cut and paste when done)
+# Build model
 #
-.
+# Run model
 #
 # Copy sample  code for models.
 #
 # Modify sample code.
 #
 # Look for sample graphics -- put in place holders.
+#
+# Summarize Data
+# Set cache=TRUE for finalized outputs in the Rmd report.
+#
 
 ##
 ## Done!
@@ -231,6 +247,8 @@ myData %>%
 #Create Report file.
 # TEST git hub links
 # Outline report sections
+# Test saving and loading files into getwd()
+# Import named knitr tags into code chunks
 #
 
 
