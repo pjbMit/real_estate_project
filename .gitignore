@@ -27,3 +27,4 @@ rsconnect/
 .Rproj.user
 todo.txt
 rmd code import.pdf
+.DS_Store
