@@ -64,8 +64,15 @@ webParam <- data.frame(
 webCmdStr<-"curl -X GET --header 'Accept: application/json' --header 'apikey: %s' --header 'accept: application/json' 'https://api.gateway.attomdata.com/propertyapi/v1.0.0/sale/snapshot?latitude=%s&longitude=%s&radius=%s&orderBy=SaleSearchDate+desc&startsalesearchdate=%s&endsalesearchdate=%s&minSaleAmt=%s&maxSaleAmt=%s&pageSize=%s'"
 
 
-fileName <- "~/cyo_data_file.json"
-gzFileName <- paste("~/cyo_data_file.json", ".gz",sep="")
+fileName <- "cyo_data_file.json"
+
+## Note: Changed name of gz file loaded, so that running this code
+## downloads and writes a file, but it won't overwrite the zipped version from github
+## instead, the git hub version of the fill will always be loaded.
+## move the file, or change this string if you wish to change that.
+gzFileName <- paste("cyo_data_file.github.json", ".gz",sep="")
+
+ealml_data_file.github.json.gz
 
 #Function to download web data, save to gzip file, and return data as a data_frame()
 getDataFromWeb <- function(webParam) {
@@ -193,6 +200,33 @@ myData %>%
 
 #run()
 
+##
+## TODO
+##
+#
+# TEST git hub links
+#
+# Test saving and loading files into getwd()
+#
+# Import code chunks from separate files (cut and paste when done)
+#
+# Outline report sections.
+#
+# Copy sample  code for models.
+#
+# Modify sample code.
+#
+# Look for sample graphics -- put in place holders.
+
+##
+## Done!
+##
+#Create new project on git hub
+#Create RStudio project
+#Copy files into project
+#Create Report file.
+#
+#
 
 
 

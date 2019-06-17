@@ -39,7 +39,7 @@ This project is intended to highlight some of the skills acquired throughout the
 
 In addition to this **executive summary**, this report also includes a **methods and analysis section**, a **results section** and a **conclusion section**.
 
-Additionally, key files for this project have been uploaded and stored on my git hub page at  
+Key files for this project have been uploaded and stored on my git hub page at  
 [github.com/pjbMit/real_estate_project](https://github.com/pjbMit/real_estate_project "My Git Hub RealML Project"). The three main files for this project are listed below, and can be viewed on git hub -- The file names are also links:
 
 * [real_ml_script.R *(link)*](https://github.com/pjbMit/real_estate_project/blob/master/real_ml_script.R "RealML R Script")
@@ -47,6 +47,13 @@ Additionally, key files for this project have been uploaded and stored on my git
 * [real_ml_report.Rmd *(link)*](https://github.com/pjbMit/real_estate_project/blob/master/real_ml_report.Rmd "RealML Report Rmd file")
 
 * [real_ml_report.pdf *(link)*](https://github.com/pjbMit/real_estate_project/blob/master/real_ml_report.pdf "RealML Report pdf file")
+
+
+Additionally, a gzip'd version of the data file is on github at:
+
+* [realml_data_file.github.json.gz *(link)*](https://github.com/pjbMit/real_estate_project/blob/master/realml_data_file.github.json.gz "RealML Data File on github")
+
+
 
 
 # Part 2) METHODS AND ANALYSIS
