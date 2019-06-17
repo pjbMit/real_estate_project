@@ -10,7 +10,7 @@ require(knitr)
 #Execute portions named with:   ## @knitr chunk_name
 # with entries of the form: ```{r chunk_name}
 read_chunk('real_ml_script.R')
-knitr::opts_chunk$set(echo = TRUE, cache = FALSE, eval=TRUE, INCLUDE=FALSE)
+knitr::opts_chunk$set(echo = FALSE, include = TRUE, cache = FALSE, eval=TRUE)
 runningInScript <- FALSE
 #knitr options are:
 #include= the output, or not
@@ -132,9 +132,20 @@ Now it's time to look at some the individual data attributes.
 ```{r summary_head, echo=FALSE}
 ```
 
+```{r summary_histogram}
+```
 
-Next, we looked the remaining columns to see how they correlated, so that we can
+Next, we looked the remaining columns to see how they correlated, to see if we can
 remove any columns that are highly correlated.
+
+```{r correlation_plot}
+```
+
+The data is highly correlated.  We use the calculation below to determine
+which attribute, if any, we should remove, and the answer turns out to be baths.
+But for now, we'll leave them in the data.
+```{rattribute_correation_removal, echo=TRUE}
+```
 
 
 

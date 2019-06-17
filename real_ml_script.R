@@ -213,16 +213,6 @@ myTrainRowId <- cleanDataRowId[trainIndx]
 myTest <- cleanData[-trainIndx,]
 myTestRowId <- cleanDataRowId[-trainIndx]
 
-#Summarize and describe data
-## @knitr summary_head
-head(myTrain,10)
-
-## @knitr summary_attribute_types
-sapply(myTrain, class)
-
-## @knitr summary_summary
-summary(myTrain)
-
 ## @knitr summary_by_year
 myTrain %>%
     mutate(year_sold=year(ymd(saledate))) %>%
@@ -233,11 +223,15 @@ myTrain %>%
     ftable()
 nrow(myTrain)
 
-#convert lat and lon to numberic
-#myTrain[,"lat"] <- as.numeric(myTrain[,"lat"])
-#myTrain[,"lon"] <- as.numeric(myTrain[,"lon"])
+## @knitr summary_head
+head(myTrain,10)
 
-# histograms each attribute
+#summary_attribute_types
+sapply(myTrain, class)
+
+#summary
+summary(myTrain)
+
 ## @knitr summary_histogram
 par(mfrow=c(1,4))
 for(i in 1:4) {
